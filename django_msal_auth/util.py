@@ -17,10 +17,11 @@ def build_msal_app(cache=None):
     Returns:
         ConfidentialClientApplication instance.
     """
+    authority_target = settings.MSAL_AUTH["tenant_id"] or "common"
     return msal.ConfidentialClientApplication(
-        client_id=settings.MSAL_CLIENT_ID,
-        client_credential=settings.MSAL_CLIENT_SECRET,
-        authority=f"{settings.MSAL_AUTHORITY}{settings.MSAL_TENANT_NAME}",
+        client_id=settings.MSAL_AUTH["client_id"],
+        client_credential=settings.MSAL_AUTH["client_secret"],
+        authority=f"https://login.microsoftonline.com/{authority_target}",
         token_cache=cache,
     )
 
@@ -65,7 +66,7 @@ def get_msal_token(request):
     msal_app = build_msal_app(cache)
     accounts = msal_app.get_accounts()
 
-    return msal_app.acquire_token_silent(settings.MSAL_SCOPE, account=accounts[0])
+    return msal_app.acquire_token_silent(settings.MSAL_AUTH["scopes"], account=accounts[0])
 
 
 def construct_url(request: HttpRequest):
@@ -89,12 +90,12 @@ def construct_url(request: HttpRequest):
         state["next"] = next_url
 
     # Build our callback (redirect) URL that will be used once authenticated
-    redirect_url = f"{request.scheme}://{settings.MSAL_DOMAIN}/microsoft/from-auth-redirect/"
+    redirect_url = f"{request.scheme}://{settings.MSAL_AUTH['site_domain']}/microsoft/from-auth-redirect/"
     # Sign our state with our Django SECRET_KEY
     signed_state = dumps(state, salt=settings.SECRET_KEY)
     # Create the full Auth url for Microsoft Authentication
     auth_url = build_msal_app().initiate_auth_code_flow(
-        scopes=settings.MSAL_SCOPE, state=signed_state, redirect_uri=redirect_url
+        scopes=settings.MSAL_AUTH["scopes"], state=signed_state, redirect_uri=redirect_url
     )
 
     return auth_url
