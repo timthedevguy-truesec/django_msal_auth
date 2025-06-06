@@ -10,8 +10,8 @@ from django.http import HttpRequest
 from django.middleware.csrf import CSRF_TOKEN_LENGTH
 from django.shortcuts import redirect
 
-from . import util
-from .exceptions import MSALStateInvalidError, MSALTokenError
+from . import auth
+from .exceptions import MSALStateInvalidError
 
 logger = logging.getLogger("django")
 
@@ -25,7 +25,8 @@ def to_auth_redirect(request):
     Returns:
         Redirect to Microsoft authentication URL.
     """
-    return redirect(util.construct_url(request))
+    auth_flow = auth.construct_msal_login_url(request)
+    return auth_flow["auth_uri"]
 
 
 def from_auth_redirect(request: HttpRequest):
@@ -67,25 +68,10 @@ def from_auth_redirect(request: HttpRequest):
     if "next" in state:
         next_url = state["next"]
 
-    # Build redirect url
-    redirect_url = f"{request.scheme}://{settings.MSAL_AUTH['site_domain']}/microsoft/from-auth-redirect/"
-
-    # Use Microsoft MSAL Library to get the resultant tokens
-    cache = util.load_msal_cache(request)
-    result = util.build_msal_app(cache).acquire_token_by_authorization_code(
-        code=request.GET.get("code"), scopes=settings.MSAL_AUTH["scopes"], redirect_uri=redirect_url
-    )
-
-    # Check for an error in results
-    if "error" in result:
-        raise MSALTokenError(result["error"])
-
-    # Get ID Token so we can grab the claims
-    token_claims = result.get("id_token_claims")
-    util.save_msal_cache(request, cache)
+    access_token = auth.get_access_token(request)
 
     # Create/Get our user based on the request and claims
-    user = authenticate(request, claims=token_claims)
+    user = authenticate(request, access_token=access_token)
 
     # Sanity check the User
     if user:
