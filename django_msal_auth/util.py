@@ -94,8 +94,8 @@ def construct_url(request: HttpRequest):
     # Sign our state with our Django SECRET_KEY
     signed_state = dumps(state, salt=settings.SECRET_KEY)
     # Create the full Auth url for Microsoft Authentication
-    auth_url = build_msal_app().initiate_auth_code_flow(
+    auth_details = build_msal_app().initiate_auth_code_flow(
         scopes=settings.MSAL_AUTH["scopes"], state=signed_state, redirect_uri=redirect_url
     )
 
-    return auth_url
+    return auth_details["auth_uri"]
