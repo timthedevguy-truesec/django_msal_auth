@@ -3,11 +3,11 @@
 ## Installation
 
 ```shell
-pip install git+https://github.com/timthedevguy/django_msal_auth.git
+pip install git+https://github.com/timthedevguy-truesec/django_msal_auth.git
 ```
 or
 ```shell
-poetry add git+https://github.com/timthedevguy/django_msal_auth.git
+poetry add git+https://github.com/timthedevguy-truesec/django_msal_auth.git
 ```
 
 Add the following to your `INSTALLED_APPS` in `settings.py`:
@@ -46,6 +46,14 @@ MSAL_AUTH = {
     ],
     "site_domain": "<your-domain>"
 }
+```
+Add backend to your `AUTHENTICATION_BACKENDS` in `settings.py`:
+
+```python
+AUTHENTICATION_BACKENDS = [
+    "django_msal_auth.auth.MicrosoftAuthenticationBackend",
+    ...
+]
 ```
 
 ### Login without Login Page
