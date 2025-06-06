@@ -40,19 +40,18 @@ MSAL_AUTH = {
     "client_id": "",
     "client_secret": "",
     "tenant_id": "",
-    "tenant_name": "",
     "scopes": [
         ""
     ],
     "site_domain": "<your-domain>"
 }
 ```
-Add backend to your `AUTHENTICATION_BACKENDS` in `settings.py`:
+Add backend to your `AUTHENTICATION_BACKENDS` in `settings.py`, leaving the default ModelBackend in place to allow for local users.
 
 ```python
 AUTHENTICATION_BACKENDS = [
     "django_msal_auth.auth.MicrosoftAuthenticationBackend",
-    ...
+    "django.contrib.auth.backends.ModelBackend"
 ]
 ```
 
